@@ -9,7 +9,12 @@ import { DateRange } from '../components/date_range';
 import { Modal } from '../components/modal';
 import { SalaryForm } from '../components/salary';
 import { OperationsTable } from '../components/table';
-import { type Currency, Transaction, type TransactionOmitted, type TransactionType } from '../models/transaction';
+import {
+	type Currency,
+	Transaction,
+	type TransactionOmitted,
+	type TransactionType,
+} from '../models/transaction';
 import { inverseCurrency } from '../utils';
 
 interface CalculatorProps {
@@ -81,19 +86,26 @@ export class Calculator {
 		output.balance.USD = this.#changeRateConverter.convert(this.#storage.getSalary(), 'EUR');
 
 		for (const transaction of transactions) {
-			output[transaction.type][transaction.currency] = (output[transaction.type][transaction.currency]) + transaction.amount;
+			output[transaction.type][transaction.currency] =
+				output[transaction.type][transaction.currency] + transaction.amount;
 
 			const otherCurrency = transaction.currency === 'EUR' ? 'USD' : 'EUR';
-			const convertedAmount = this.#changeRateConverter.convert(transaction.amount, transaction.currency);
-			output[transaction.type][otherCurrency] = (output[transaction.type][otherCurrency]) + convertedAmount;
+			const convertedAmount = this.#changeRateConverter.convert(
+				transaction.amount,
+				transaction.currency,
+			);
+			output[transaction.type][otherCurrency] =
+				output[transaction.type][otherCurrency] + convertedAmount;
 
-			output.balance[transaction.currency] = transaction.type === 'expense'
-				? (output.balance[transaction.currency]) - transaction.amount
-				: (output.balance[transaction.currency]) + transaction.amount;
+			output.balance[transaction.currency] =
+				transaction.type === 'expense'
+					? output.balance[transaction.currency] - transaction.amount
+					: output.balance[transaction.currency] + transaction.amount;
 
-			output.balance[otherCurrency] = transaction.type === 'expense'
-				? (output.balance[otherCurrency]) - convertedAmount
-				: (output.balance[otherCurrency]) + convertedAmount;
+			output.balance[otherCurrency] =
+				transaction.type === 'expense'
+					? output.balance[otherCurrency] - convertedAmount
+					: output.balance[otherCurrency] + convertedAmount;
 		}
 
 		return output;
@@ -114,7 +126,10 @@ export class Calculator {
 
 			if (name === 'operation-amount') {
 				transaction.amount = Number(value as string);
-				transaction.convertedAmount = this.#changeRateConverter.convert(transaction.amount, transaction.currency);
+				transaction.convertedAmount = this.#changeRateConverter.convert(
+					transaction.amount,
+					transaction.currency,
+				);
 			}
 
 			if (name === 'operation-type') {
@@ -170,6 +185,11 @@ export class Calculator {
 		this.renderBalance();
 	}
 
+	handleThresholdUpdate(value: number): void {
+		this.#storage.setThreshold(value);
+		this.renderBalance();
+	}
+
 	handleCategoryCreate(name: Category['name']): void {
 		this.#storage.createCategory(name);
 		this.renderActions();
@@ -189,7 +209,7 @@ export class Calculator {
 				}
 
 				return transaction;
-			})
+			});
 
 			if (isDirty) {
 				this.renderOperationsTable();
@@ -200,63 +220,82 @@ export class Calculator {
 	}
 
 	renderOperationsTable(filters?: { year: number; month: number }): void {
-		this.#historyContainer.replaceChildren(OperationsTable({
-			transactions: filters
-				? this.#storage.filterTransactionsByMonth(filters.year, filters.month)
-				: this.#storage.listTransactions(),
-			onTransactionUpdate: this.handleTransactionUpdate.bind(this),
-			onTransactionDelete: this.handleTransactionDelete.bind(this),
-			categories: this.#storage.listCategories().map(category => [category.id, category.name]),
-		}));
+		// Filtrage des opérations par mois
+		this.#historyContainer.replaceChildren(
+			OperationsTable({
+				transactions: filters
+					? this.#storage.filterTransactionsByMonth(filters.year, filters.month)
+					: this.#storage.listTransactions(),
+				onTransactionUpdate: this.handleTransactionUpdate.bind(this),
+				onTransactionDelete: this.handleTransactionDelete.bind(this),
+				categories: this.#storage.listCategories().map((category) => [category.id, category.name]),
+			}),
+		);
 	}
 
 	renderActions(): void {
-		this.#actionsContainer.replaceChildren(Modal({
-			id: 'add-transaction-modal',
-			modalTitle: 'Ajouter une opération',
-			onFormSubmit: this.handleCreateTransaction.bind(this),
-			trigger: Button({ variant: 'normal', action: 'primary', content: 'Ajouter une opération', className: 'w-full' }),
-			categories: this.#storage.listCategories().map(category => [category.id, category.name]),
-		}));
+		this.#actionsContainer.replaceChildren(
+			Modal({
+				id: 'add-transaction-modal',
+				modalTitle: 'Ajouter une opération',
+				onFormSubmit: this.handleCreateTransaction.bind(this),
+				trigger: Button({
+					variant: 'normal',
+					action: 'primary',
+					content: 'Ajouter une opération',
+					className: 'w-full',
+				}),
+				categories: this.#storage.listCategories().map((category) => [category.id, category.name]),
+			}),
+		);
 	}
 
-	renderDateRange(): void {
-		this.#dateRangeContainer.replaceChildren(DateRange({
-			selectedMonth: this.#selectedMonth,
-			onPeriodChange: (year: number, month: number) => {
-				/// maybe there is something to do here?
-			},
-		}));
+	renderDateRange() {
+		this.#dateRangeContainer.replaceChildren(
+			DateRange({
+				selectedMonth: this.#selectedMonth,
+				onPeriodChange: (year, month) => {
+					this.selectedMonth = { year, month };
+					this.render({ year, month });
+				},
+			}),
+		);
 	}
 
 	renderBalance(filters?: { year: number; month: number }): void {
-		const balance = this.compute(filters
-			? this.#storage.filterTransactionsByMonth(filters.year, filters.month)
-			: this.#storage.listTransactions()
+		const balance = this.compute(
+			filters
+				? this.#storage.filterTransactionsByMonth(filters.year, filters.month)
+				: this.#storage.listTransactions(),
 		);
-
-		this.#balanceContainer.replaceChildren(Balance({
-			totalBalance: balance.balance,
-			totalExpenses: balance.expense,
-			totalIncome: balance.income,
-		}));
+		this.#balanceContainer.replaceChildren(
+			Balance({
+				totalBalance: balance.balance,
+				totalExpenses: balance.expense,
+				totalIncome: balance.income,
+			}),
+		);
 	}
 
 	renderSalary(): void {
 		this.#salaryContainer.replaceChildren(
 			SalaryForm({
 				value: this.#storage.getSalary(),
+				threshold: this.#storage.getThreshold(),
 				onUpdate: this.handleSalaryUpdate.bind(this),
+				onThresholdUpdate: this.handleThresholdUpdate.bind(this),
 			}),
 		);
 	}
 
 	renderCategories(): void {
-		this.#categoriesContainer.replaceChildren(Categories({
-			categories: this.#storage.listCategories(),
-			onCategoryCreate: this.handleCategoryCreate.bind(this),
-			onCategoryDelete: this.handleCategoryDelete.bind(this),
-		}))
+		this.#categoriesContainer.replaceChildren(
+			Categories({
+				categories: this.#storage.listCategories(),
+				onCategoryCreate: this.handleCategoryCreate.bind(this),
+				onCategoryDelete: this.handleCategoryDelete.bind(this),
+			}),
+		);
 	}
 
 	render(filters?: { year: number; month: number }): void {

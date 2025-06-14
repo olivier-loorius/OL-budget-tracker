@@ -40,7 +40,7 @@ export function ModalForm(props: Props) {
 					name: 'operation-date',
 					label: "Date de l'opération",
 					required: true,
-					value: props.transaction ? formatDateToInput(props.transaction?.operatedAt) : undefined,
+					value: props.transaction ? formatDateToInput(props.transaction?.operatedAt) : formatDateToInput(new Date()),
 				}),
 				ModalField({
 					inputType: 'text',

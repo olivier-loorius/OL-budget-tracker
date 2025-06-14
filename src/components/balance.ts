@@ -14,7 +14,7 @@ export function Balance(props: BalanceProps) {
 		BalanceItem({ label: 'Dépenses', values: props.totalExpenses, className: 'text-red-600' }),
 		BalanceItem({ label: 'Revenus', values: props.totalIncome, className: 'text-green-600' }),
 		BalanceItem({ label: 'Solde', values: props.totalBalance, className: 'text-blue-600' }),
-	])
+	]);
 }
 interface BalanceItemProps {
 	label: string;

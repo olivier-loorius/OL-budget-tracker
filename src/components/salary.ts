@@ -12,27 +12,22 @@ export function SalaryForm(props: SalaryFormProps) {
 		if (!(event.currentTarget instanceof HTMLInputElement)) {
 			return;
 		}
-
 		props.onUpdate(event.currentTarget.valueAsNumber);
 	}
 
 	function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
-
 		if (!(event.currentTarget instanceof HTMLFormElement)) {
 			return;
 		}
-
 		props.onUpdate(event.currentTarget['amount'].valueAsNumber);
 	}
 
 	function handleClear(event: MouseEvent) {
 		props.onUpdate(0);
-
 		if (!(event.currentTarget instanceof HTMLButtonElement)) {
 			return;
 		}
-
 		event.currentTarget.closest('form')?.reset();
 	}
 
@@ -44,9 +39,7 @@ export function SalaryForm(props: SalaryFormProps) {
 			required: true,
 			value: props.value?.toString(),
 			className: 'grow',
-			events: {
-				blur: handleBlur
-			}
+			events: { blur: handleBlur }
 		}),
 		Button({
 			variant: 'square',
@@ -54,9 +47,7 @@ export function SalaryForm(props: SalaryFormProps) {
 			icon: 'x',
 			size: 'lg',
 			className: 'shrink-0',
-			events: {
-				click: handleClear
-			}
+			events: { click: handleClear }
 		})
-	])
+	]);
 }

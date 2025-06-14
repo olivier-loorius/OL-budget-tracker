@@ -17,11 +17,14 @@ export class LocalStorage implements StorageInterface {
 	}
 
 	#save() {
-		window.localStorage.setItem(this.#storageKey, JSON.stringify({
-			salary: this.#salary,
-			transactions: this.#transactions.map((transaction) => transaction.serialize()),
-			categories: this.#categories.map((category) => category.serialize()),
-		}));
+		window.localStorage.setItem(
+			this.#storageKey,
+			JSON.stringify({
+				salary: this.#salary,
+				transactions: this.#transactions.map((transaction) => transaction.serialize()),
+				categories: this.#categories.map((category) => category.serialize()),
+			}),
+		);
 	}
 
 	hydrate(): void {
@@ -42,7 +45,10 @@ export class LocalStorage implements StorageInterface {
 		}
 
 		if ('transactions' in decoded) {
-			this.#transactions = decoded.transactions.map((item: TransactionOmitted) => new Transaction(this.#categories, this.#changeRateConverter, item));
+			this.#transactions = decoded.transactions.map(
+				(item: TransactionOmitted) =>
+					new Transaction(this.#categories, this.#changeRateConverter, item),
+			);
 		}
 	}
 
@@ -55,9 +61,10 @@ export class LocalStorage implements StorageInterface {
 	}
 
 	createTransaction(payload: TransactionOmitted | Transaction): Transaction {
-		const transaction = payload instanceof Transaction
-			? payload
-			: new Transaction(this.#categories, this.#changeRateConverter, payload);
+		const transaction =
+			payload instanceof Transaction
+				? payload
+				: new Transaction(this.#categories, this.#changeRateConverter, payload);
 
 		const transactionExists = this.#transactions.some((t) => t.id === transaction.id);
 
@@ -101,8 +108,13 @@ export class LocalStorage implements StorageInterface {
 		this.#save();
 	}
 
+	// filtrage des transactions par mois
 	filterTransactionsByMonth(year: number, month: number): Array<Transaction> {
-		// to implement...
+		// uniquement les transactions
+		return this.#transactions.filter((transaction) => {
+			const date = transaction.operatedAt;
+			return date.getFullYear() === year && date.getMonth() === month;
+		});
 	}
 
 	setSalary(salary: number): void {
@@ -112,6 +124,11 @@ export class LocalStorage implements StorageInterface {
 
 	getSalary(): number {
 		return this.#salary;
+	}
+
+	setThreshold(value: number) {}
+	getThreshold(): number {
+		return 0;
 	}
 
 	listCategories(): Array<Category> {
@@ -131,9 +148,7 @@ export class LocalStorage implements StorageInterface {
 	}
 
 	deleteCategory(categoryId: Category['id']) {
-		this.#categories = this.#categories.filter(
-			(category) => categoryId !== category.id,
-		);
+		this.#categories = this.#categories.filter((category) => categoryId !== category.id);
 		this.#save();
 	}
 }

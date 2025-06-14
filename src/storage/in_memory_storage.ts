@@ -1,7 +1,7 @@
 import type { ChangeRateConverter } from '../compute/change_rate_converter';
 import type { StorageInterface } from './storage_interface';
 
-import {  Category } from '../models/category';
+import { Category } from '../models/category';
 import { Transaction, type TransactionOmitted } from '../models/transaction';
 
 export class InMemoryStorage implements StorageInterface {
@@ -28,9 +28,10 @@ export class InMemoryStorage implements StorageInterface {
 	}
 
 	createTransaction(payload: TransactionOmitted | Transaction): Transaction {
-		const transaction = payload instanceof Transaction
-			? payload
-			: new Transaction(this.#categories, this.#changeRateConverter, payload);
+		const transaction =
+			payload instanceof Transaction
+				? payload
+				: new Transaction(this.#categories, this.#changeRateConverter, payload);
 
 		this.#transactions.push(transaction);
 
@@ -66,8 +67,13 @@ export class InMemoryStorage implements StorageInterface {
 		this.#transactions = this.#transactions.map((t) => callback(t));
 	}
 
+	// filtrage des transactions
 	filterTransactionsByMonth(year: number, month: number): Array<Transaction> {
-		// to implement...
+		// uniquement les transactions du mois/année
+		return this.#transactions.filter((transaction) => {
+			const date = transaction.operatedAt;
+			return date.getFullYear() === year && date.getMonth() === month;
+		});
 	}
 
 	setSalary(salary: number) {
@@ -76,6 +82,11 @@ export class InMemoryStorage implements StorageInterface {
 
 	getSalary(): number {
 		return this.#salary;
+	}
+
+	setThreshold(value: number) {}
+	getThreshold(): number {
+		return 0;
 	}
 
 	listCategories(): Array<Category> {
@@ -94,8 +105,6 @@ export class InMemoryStorage implements StorageInterface {
 	}
 
 	deleteCategory(categoryId: Category['id']) {
-		this.#categories = this.#categories.filter(
-			(category) => categoryId !== category.id,
-		);
+		this.#categories = this.#categories.filter((category) => categoryId !== category.id);
 	}
 }

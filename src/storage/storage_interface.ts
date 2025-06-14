@@ -34,4 +34,8 @@ export interface StorageInterface {
 	createCategory(name: string): Category;
 
 	deleteCategory(categoryId: Category['id']): void;
+
+	getThreshold(): number;
+
+	setThreshold(value: number): void;
 }

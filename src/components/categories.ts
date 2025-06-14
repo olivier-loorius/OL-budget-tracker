@@ -32,18 +32,25 @@ export function Categories(props: CategoriesProps) {
 	function handleDeleteCategory(event: MouseEvent, categoryId: Category['id']) {
 		event.preventDefault();
 
-		props.onCategoryDelete(categoryId)
+		props.onCategoryDelete(categoryId);
 	}
 
-	const form = createElement('form', {}, { submit: handleFormSubmit }, [
-		ModalField({
-			inputType: 'text',
-			name: 'name',
-			label: 'Nom de la catégorie',
-			placeholder: 'Ex: Courses',
-			required: true,
-		}),
-	]);
+	// Correction du style du champ catégorie
+	const form = createElement(
+		'form',
+		{ className: 'w-full flex items-center' },
+		{ submit: handleFormSubmit },
+		[
+			ModalField({
+				inputType: 'text',
+				name: 'name',
+				label: 'Nom de la catégorie',
+				placeholder: 'Ex: Courses',
+				required: true,
+				className: 'w-full',
+			}),
+		],
+	);
 
 	const list = createElement(
 		'ul',
@@ -59,8 +66,8 @@ export function Categories(props: CategoriesProps) {
 					size: 'sm',
 					events: {
 						click: (event) => handleDeleteCategory(event, category.id),
-					}
-				})
+					},
+				}),
 			]),
 		),
 	);

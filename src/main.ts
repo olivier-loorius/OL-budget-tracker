@@ -36,4 +36,7 @@ const calculator = new Calculator({
 await calculator.changeRateConverter.fetchRates();
 calculator.storage.hydrate();
 
-calculator.render();
+calculator.render({
+	year: new Date().getFullYear(),
+	month: new Date().getMonth(),
+});
