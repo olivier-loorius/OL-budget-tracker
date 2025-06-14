@@ -18,6 +18,10 @@ const MONTHS = [
 interface DateRangeProps {
 	selectedMonth: { year: number; month: number };
 	onPeriodChange: (year: number, month: number) => void;
+	// Ajout pour le filtre catégorie
+	categories: Array<{ id: string; name: string }>;
+	selectedCategoryId: string;
+	onCategoryFilterChange: (categoryId: string) => void;
 }
 
 export function DateRange(props: DateRangeProps) {
@@ -55,6 +59,29 @@ export function DateRange(props: DateRangeProps) {
 				createElement('button', { className: 'rounded bg-rose-300 px-2 py-1', type: 'button' }, { click: goToNextMonth }, '>'),
 			]),
 			isCurrentMonth ? createElement('div', { className: 'text-base font-normal text-rose-800' }, {}, todayString) : null,
+			// Ajout du filtre catégorie sous la date
+			createElement('div', { className: 'w-full flex justify-center mt-2' }, {}, [
+				createElement(
+					'select',
+					{
+						className: 'rounded border px-2 py-1 text-base text-rose-700',
+						value: props.selectedCategoryId,
+						name: 'category-filter',
+					},
+					{
+						change: (e: Event) => {
+							const target = e.target as HTMLSelectElement;
+							props.onCategoryFilterChange(target.value);
+						},
+					},
+					[
+						createElement('option', { value: '' }, {}, 'Toutes les catégories'),
+						...props.categories.map((cat) =>
+							createElement('option', { value: cat.id }, {}, cat.name)
+						),
+					]
+				),
+			]),
 		],
 	);
 }

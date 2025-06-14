@@ -16,6 +16,7 @@ import {
 	type TransactionType,
 } from '../models/transaction';
 import { inverseCurrency } from '../utils';
+import { ModalFun } from '../components/modal_fun';
 
 interface CalculatorProps {
 	storage: StorageInterface;
@@ -41,6 +42,7 @@ export class Calculator {
 	readonly #categoriesContainer: HTMLElement;
 
 	#selectedMonth: { year: number; month: number };
+	#selectedCategoryId: string = '';
 
 	constructor(props: CalculatorProps) {
 		this.#storage = props.storage;
@@ -68,7 +70,14 @@ export class Calculator {
 
 	set selectedMonth(value: { year: number; month: number }) {
 		this.#selectedMonth = value;
-		// maybe we should trigger a re-render here?
+	}
+
+	set selectedCategoryId(value: string) {
+		this.#selectedCategoryId = value;
+	}
+
+	get selectedCategoryId() {
+		return this.#selectedCategoryId;
 	}
 
 	compute(transactions: Array<Transaction>) {
@@ -153,8 +162,17 @@ export class Calculator {
 		}
 
 		this.#storage.createTransaction(transaction);
-		this.renderOperationsTable();
-		this.renderBalance();
+		// Correction : on passe le filtre du mois sélectionné pour n'afficher que les opérations du mois courant
+		this.renderOperationsTable(this.selectedMonth);
+		this.renderBalance(this.selectedMonth);
+
+		// Affichage de la modal fun à l'ajout d'une opération
+		const funModal = ModalFun();
+		document.body.append(funModal);
+		funModal.showModal();
+		setTimeout(() => {
+			if (funModal.open) funModal.close();
+		}, 2000);
 	}
 
 	handleTransactionUpdate(values: FormData) {
@@ -195,6 +213,7 @@ export class Calculator {
 		this.renderActions();
 		this.renderCategories();
 		this.renderOperationsTable();
+		this.renderDateRange(); // Ajout : met à jour le filtre catégorie
 	}
 
 	handleCategoryDelete(id: Category['id']): void {
@@ -216,16 +235,20 @@ export class Calculator {
 			}
 
 			this.renderCategories();
+			this.renderDateRange(); // Ajout : met à jour le filtre catégorie
 		}
 	}
 
-	renderOperationsTable(filters?: { year: number; month: number }): void {
-		// Filtrage des opérations par mois
+	renderOperationsTable(filters?: { year: number; month: number; categoryId?: string }): void {
+		let transactions = filters
+			? this.#storage.filterTransactionsByMonth(filters.year, filters.month)
+			: this.#storage.listTransactions();
+		if (filters && filters.categoryId) {
+			transactions = transactions.filter(t => t.category?.id === filters.categoryId);
+		}
 		this.#historyContainer.replaceChildren(
 			OperationsTable({
-				transactions: filters
-					? this.#storage.filterTransactionsByMonth(filters.year, filters.month)
-					: this.#storage.listTransactions(),
+				transactions,
 				onTransactionUpdate: this.handleTransactionUpdate.bind(this),
 				onTransactionDelete: this.handleTransactionDelete.bind(this),
 				categories: this.#storage.listCategories().map((category) => [category.id, category.name]),
@@ -251,12 +274,20 @@ export class Calculator {
 	}
 
 	renderDateRange() {
+		const categories = this.#storage.listCategories().map(c => ({ id: c.id, name: c.name }));
 		this.#dateRangeContainer.replaceChildren(
 			DateRange({
 				selectedMonth: this.#selectedMonth,
+				categories,
+				selectedCategoryId: this.#selectedCategoryId,
 				onPeriodChange: (year, month) => {
 					this.selectedMonth = { year, month };
 					this.render({ year, month });
+				},
+				onCategoryFilterChange: (categoryId) => {
+					this.selectedCategoryId = categoryId;
+					this.renderOperationsTable({ ...this.selectedMonth, categoryId });
+					this.renderBalance(this.selectedMonth);
 				},
 			}),
 		);
